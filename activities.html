@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Log - Heatmap and Progress Bar</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* General styling */
+        .heatmap {
+            font-family: Arial, sans-serif;
+            margin: 20px auto;
+            max-width: 900px;
+        }
+        .day {
+            stroke: #ccc;
+        }
+        .month {
+            font-size: 12px;
+            fill: #aaa;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+
+        /* Progress bar styling */
+        #progress-bar-container {
+            margin: 20px auto;
+            width: 80%;
+            height: 30px;
+            background-color: #e0e0e0;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #progress-bar {
+            height: 100%;
+            background-color: #4caf50;
+            transition: width 0.5s ease;
+        }
+        #pace-marker {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: red;
+            transition: left 0.5s ease;
+        }
+        #progress-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Activity Log</h1>
+
+    <!-- Heatmap Container -->
+    <h2>Calendar Heatmap</h2>
+    <div id="heatmap" class="heatmap"></div>
+
+    <!-- Progress Bar -->
+    <h2>Progress Bar</h2>
+    <div id="progress-bar-container">
+        <div id="progress-bar"></div>
+        <div id="pace-marker"></div>
+    </div>
+    <p id="progress-info">Loading progress...</p>
+
+    <!-- Run Entries Table -->
+    <h2>Logged Activities</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Distance (miles)</th>
+                <th>Average Pace</th>
+                <th>Fastest Mile</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for activity in activities %}
+            <tr>
+                <td>{{ activity[1] }}</td>
+                <td>{{ activity[2] }}</td>
+                <td>{{ activity[3] }}</td>
+                <td>{{ activity[4] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Fetch the heatmap data from Flask
+            fetch('/api/calendar-heatmap')
+                .then(response => response.json())
+                .then(data => {
+                    // Build the heatmap
+                    const width = 900;
+                    const height = 140;
+                    const cellSize = 15; // Size of each square
+
+                    // Force the calendar to generate for 2025
+                    const startYear = 2025;
+                    const svg = d3.select("#heatmap")
+                        .append("svg")
+                        .attr("width", width)
+                        .attr("height", height)
+                        .attr("class", "year")
+                        .append("g")
+                        .attr("transform", "translate(40, 20)");
+
+                    // Days and weeks
+                    const timeWeek = d3.timeFormat("%U");
+                    const timeDay = d3.timeFormat("%w");
+                    const timeMonth = d3.timeFormat("%b");
+                    const formatDate = d3.timeFormat("%Y-%m-%d"); // Ensure consistent formatting
+
+                    const colorScale = d3.scaleLinear()
+                        .domain([0, d3.max(data, d => d.value)])
+                        .range(["#e0e0e0", "#4caf50"]);
+
+                    // Map data
+                    const dataMap = new Map(data.map(d => [d.date, d.value]));
+                    console.log("Data Map Keys:", Array.from(dataMap.keys())); // Debugging
+                    console.log("Data Map Values:", Array.from(dataMap.values())); // Debugging
+
+                    const generatedDates = d3.timeDays(
+                        new Date(`${startYear}-01-01`),
+                        new Date(`${startYear}-12-31`)
+                    ).map(d => formatDate(d));
+                    console.log("Generated Dates:", generatedDates); // Debugging
+
+                    svg.selectAll(".day")
+                        .data(d3.timeDays(new Date(`${startYear}-01-01`), new Date(`${startYear}-12-31`)))
+                        .enter().append("rect")
+                        .attr("class", "day")
+                        .attr("width", cellSize)
+                        .attr("height", cellSize)
+                        .attr("x", d => timeWeek(d) * cellSize)
+                        .attr("y", d => timeDay(d) * cellSize)
+                        .attr("fill", d => {
+                            const formattedDate = formatDate(d);
+                            const value = dataMap.get(formattedDate) || 0; // Get value or default to 0
+                            console.log(`Date: ${formattedDate}, Value: ${value}`); // Debugging
+                            return colorScale(value);
+                        });
+
+                    // Add month labels
+                    svg.selectAll(".month")
+                        .data(d3.timeMonths(new Date(`${startYear}-01-01`), new Date(`${startYear}-12-31`)))
+                        .enter().append("text")
+                        .attr("class", "month")
+                        .attr("x", d => timeWeek(d3.timeMonth(d)) * cellSize)
+                        .attr("y", -5)
+                        .text(d => timeMonth(d));
+                });
+
+            // Fetch progress data from Flask
+            fetch('/api/progress-data')
+                .then(response => response.json())
+                .then(data => {
+                    const totalMileage = data.total_mileage;
+                    const goalPace = data.goal_pace;
+
+                    // Update progress bar
+                    const progressBar = document.getElementById('progress-bar');
+                    const paceMarker = document.getElementById('pace-marker');
+                    const progressInfo = document.getElementById('progress-info');
+
+                    const progressPercentage = Math.min((totalMileage / 1000) * 100, 100);
+                    const pacePercentage = Math.min((goalPace / 1000) * 100, 100);
+
+                    // Set widths and positions
+                    progressBar.style.width = `${progressPercentage}%`;
+                    paceMarker.style.left = `${pacePercentage}%`;
+
+                    // Update text info
+                    progressInfo.textContent = `Total Mileage: ${totalMileage.toFixed(2)} miles | Goal Pace: ${goalPace.toFixed(2)} miles`;
+                });
+        });
+    </script>
+</body>
+</html>
