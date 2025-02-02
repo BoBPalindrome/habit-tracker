@@ -7,7 +7,7 @@ app = Flask(__name__, template_folder="../templates")  # Ensure Flask finds the 
 
 # Initialize database (create folder if missing)
 DATABASE_PATH = "../database/tracker.db"
-os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
+DATABASE_PATH = os.path.join(os.path.dirname(__file__), "../database/tracker.db")
 
 def init_db():
     conn = sqlite3.connect(DATABASE_PATH)
