@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Your Run</title>
+</head>
+<body>
+    <h1>Log Your Run</h1>
+    <form method="POST">
+        <!-- Date Input -->
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" required>
+
+        <!-- Distance Input -->
+        <label for="distance">Distance (miles):</label>
+        <input type="number" id="distance" name="distance" step="0.01" placeholder="e.g., 5.25" required>
+
+        <!-- Average Pace Input -->
+        <label for="average_pace">Average Pace (MM:SS):</label>
+        <input type="text" id="average_pace" name="average_pace" placeholder="e.g., 8:30" 
+               pattern="^\d{1,2}:\d{2}$" required>
+
+        <!-- Fastest Mile Time Input -->
+        <label for="fastest_mile_time">Fastest Mile (MM:SS):</label>
+        <input type="text" id="fastest_mile_time" name="fastest_mile_time" placeholder="e.g., 7:15" 
+               pattern="^\d{1,2}:\d{2}$" required>
+
+        <!-- Submit Button -->
+        <button type="submit">Log Run</button>
+    </form>
+</body>
+</html>
