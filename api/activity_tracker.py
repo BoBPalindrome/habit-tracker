@@ -62,9 +62,7 @@ def calendar_heatmap():
     heatmap_data = [{"date": row[0], "value": row[1]} for row in rows]
     return jsonify(heatmap_data)
 
-# **Vercel requires this**
-def handler(event, context):
-    return app
+
 
 if __name__ == '__main__':
     init_db()
