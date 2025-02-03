@@ -1,15 +1,15 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 import sqlite3
-from datetime import date, datetime
 import os
+from datetime import date
 
-app = Flask(__name__, template_folder="../templates")  # Ensure Flask finds the HTML files
+app = Flask(__name__, template_folder="../templates")  # Ensure Flask finds the HTML templates
 
-# Initialize database (create folder if missing)
-DATABASE_PATH = "../database/tracker.db"
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), "../database/tracker.db")
 
+# Initialize database (ensure it exists)
 def init_db():
+    os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     cursor.execute('''
@@ -62,7 +62,7 @@ def calendar_heatmap():
     heatmap_data = [{"date": row[0], "value": row[1]} for row in rows]
     return jsonify(heatmap_data)
 
-# Required for Vercel
+# **Vercel requires this**
 def handler(event, context):
     return app
 
