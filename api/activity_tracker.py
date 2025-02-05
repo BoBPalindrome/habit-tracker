@@ -65,5 +65,6 @@ def calendar_heatmap():
 
 
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
+    init_db()  # Ensure the database is initialized
+    port = int(os.environ.get("PORT", 5000))  # Get Vercel's assigned port
+    app.run(host='0.0.0.0', port=port)
