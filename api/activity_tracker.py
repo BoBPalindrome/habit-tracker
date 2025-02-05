@@ -67,4 +67,7 @@ def calendar_heatmap():
 if __name__ == '__main__':
     init_db()  # Ensure the database is initialized
     port = int(os.environ.get("PORT", 5000))  # Get Vercel's assigned port
+    print(f"Running Flask on port {port}")  # This will appear in Vercel logs
+
+    
     app.run(host='0.0.0.0', port=port)
